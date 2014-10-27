@@ -1,15 +1,31 @@
+"""
+Cours G4B 2014:
+    @contact: fabien.mareuil@pasteur.fr
+    @contact: olivia.doppelt@pasteur.fr
+    @contact: alban.lermine@pasteur.fr
+Script to use Bioblend and interract with
+a galaxy instance.
+"""
 from bioblend.galaxy import GalaxyInstance
 import argparse
 import urlparse
 import requests
 import shlex
 import os
-    
+
 def connectgalaxy(apikey, galaxyurl):
+    """
+    @param apikey:
+    @param galaxyurl:
+    returns an object galaxyinstance
+    """
     return GalaxyInstance(url=galaxyurl, key=apikey)
 
-def liste_historyfiles(key, url, namehisto):
-    gi = connectgalaxy(key, url)
+def liste_historyfiles(key, galaxyurl, namehisto):
+    """
+    lists the files in a history
+    """
+    gi = connectgalaxy(key, galaxyurl)
     filesdico = {}
     histolist = gi.histories.get_histories()
     for histo in histolist:
@@ -23,7 +39,7 @@ def liste_historyfiles(key, url, namehisto):
 def specific_download_dataset(gi, dataset, id, idhisto, key, file_path, use_default_filename=True, verify=True):
     download_url = 'api/histories/' + idhisto+ '/contents/' + id + '/display?to_ext=' + dataset['file_ext'] +'&hda_ldda=' + dataset['hda_ldda'] + '&key=' + key
     url = urlparse.urljoin(gi.base_url, download_url)
-    
+
     r = requests.get(url, verify=verify)
     if file_path is None:
             return r.content
@@ -43,7 +59,7 @@ def specific_download_dataset(gi, dataset, id, idhisto, key, file_path, use_defa
             file_local_path = file_path
         with open(file_local_path, 'wb') as fp:
             fp.write(r.content)
-    
+
 def downloadfile(key, url, id, idhisto, path):
     gi = connectgalaxy(key, url)
     dataset = gi.datasets.show_dataset(id)
@@ -51,22 +67,24 @@ def downloadfile(key, url, id, idhisto, path):
             raise DatasetStateException("Dataset not ready. Dataset id: %s, current state: %s" % (id, dataset['state']))
     #gi.datasets.download_dataset(id, file_path=path, verify=True)
     specific_download_dataset(gi, dataset, id, idhisto, key, file_path=path, verify=True)
- 
-    
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-k", "--key", action="store", help="api key of galaxy")
     parser.add_argument("-u", "--url", action="store", help="url of galaxy")
     parser.add_argument("-m", "--my_histories", help="list yours histories")
-    parser.add_argument("-h", "--history_list", help="list files of a history")
+    parser.add_argument("-hi", "--history_list", help="list files of a history")
     parser.add_argument("-n", "--name", action="store", help="name of galaxy history")
     parser.add_argument("-r", "--run_workflow", help="run a workflow")
     parser.add_argument("-w", "--id_workflow", action="store", help="id of your workflow")
     parser.add_argument("-d", "--download_files", help="download files")
-    parser.add_argument("-f", "--filesid", nargs=+, help="file id to download")
+    parser.add_argument("-f", "--filesid", nargs="+", help="file id to download")
     parser.add_argument("-p", "--path", action="store", help="output file to download")
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0')  
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0')
+
     args = parser.parse_args()
+
     if args.my_histories:
         liste_histories(url, key)
     elif args.history_list:
@@ -80,4 +98,4 @@ if __name__ == "__main__":
         pass
     elif args.download_files:
         if args.fileid:
-            downloadfile(args.key, args.url, args.fileid, idhisto, args.path)    
+            downloadfile(args.key, args.url, args.fileid, idhisto, args.path)
