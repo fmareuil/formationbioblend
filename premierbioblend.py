@@ -7,6 +7,7 @@ Script to use Bioblend and interract with
 a galaxy instance.
 """
 from bioblend.galaxy import GalaxyInstance
+from bioblend.galaxy.tools.inputs import inputs, dataset
 import argparse
 import urlparse
 import requests
@@ -23,6 +24,13 @@ def connectgalaxy(apikey, galaxyurl):
     """
     return GalaxyInstance(url=galaxyurl, key=apikey)
 
+def _find_history(gi, namehisto):
+    histolist = gi.histories.get_histories(name=namehisto)
+    if len(histolist) == 0:
+        raise ValueError("Il n'y a pas d'historique qui porte ce nom")
+    elif len(histolist) > 1:
+        raise ValueError("Il y a plus d'un historique qui porte ce nom") 
+    return histolist[0]
 
 def liste_historyfiles(apikey, galaxyurl, namehisto):
     """
@@ -30,29 +38,33 @@ def liste_historyfiles(apikey, galaxyurl, namehisto):
     """
     gi = connectgalaxy(apikey, galaxyurl)
     filesdico = {}
-    histolist = gi.histories.get_histories(name=namehisto)
-    if len(histolist) == 0:
-        raise ValueError("Il n'y a pas d'historique qui porte ce nom")
-    elif len(histolist) > 1:
-        print "Il y a plus d'un historique qui porte ce nom"
-    for histo in histolist:
-        if histo["name"] == namehisto:
-            idhisto = histo["id"]
-            liste_data = gi.histories.show_history(histo["id"],contents=False)["state_ids"]["ok"]
+    histo = _find_history(gi, namehisto)
+    idhisto = histo["id"]
+    liste_data = gi.histories.show_history(histo["id"],contents=False)["state_ids"]["ok"]
     for iddata in liste_data:
         filesdico[gi.datasets.show_dataset(iddata)['id']] = gi.datasets.show_dataset(iddata)['name']
     return filesdico, idhisto
 
-
-def run_workflow(key, url, name):
-
+def run_workflow(key, url, nameworkflow, namehistory, datasets_id):
     gi = connectgalaxy(key, url)
+    workflow = _find_workflow(gi, nameworkflow)
+    history = _find_history(gi, namehistory)
+    #print inputs().set("input", dataset('datasets_id[0]'))
+    print "TODO: Je ne sais pas comment fait ici a regarder de plus pres"
+    datasetmap = {'4': {'id': datasets_id[0], 'src' : 'hda'}}
+    datasetmap =  dataset('datasets_id[0]').__dict__
+    gi.workflows.run_workflow(workflow['id'], history_id=history['id'], dataset_map=datasetmap)
+    
+
+def _find_workflow(gi, name):
+
     workflow = gi.workflows.get_workflows(name=name)
     if len(workflow) > 1:
         raise ValueError("Il y a plusieurs workflows qui portent ce nom")
     elif len(workflow) == 0:
         raise ValueError("Pas de Workflow avec ce nom")
-
+    return workflow[0]
+    
 
 def specific_download_dataset(gi, dataset, id, idhisto, key, file_path, use_default_filename=True, verify=True):
     download_url = 'api/histories/' + idhisto+ '/contents/' + id + '/display?to_ext=' + dataset['file_ext'] +'&hda_ldda=' + dataset['hda_ldda'] + '&key=' + key
@@ -115,7 +127,7 @@ if __name__ == "__main__":
         else:
             print "the -hi option need a history name"
     elif args.name_workflow:
-        run_workflow(args.key, args.url, args.name_workflow)
+        run_workflow(args.api_key, args.galaxy_url, args.name_workflow, args.name, args.filesid)
     elif args.download_files:
         if args.fileid:
-            downloadfile(args.key, args.url, args.fileid, idhisto, args.path)
+            downloadfile(args.api_key, args.galaxy_url, args.fileid, idhisto, args.path)
