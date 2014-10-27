@@ -12,6 +12,8 @@ import urlparse
 import requests
 import shlex
 import os
+import pprint
+
 
 def connectgalaxy(apikey, galaxyurl):
     """
@@ -21,13 +23,14 @@ def connectgalaxy(apikey, galaxyurl):
     """
     return GalaxyInstance(url=galaxyurl, key=apikey)
 
-def liste_historyfiles(key, galaxyurl, namehisto):
+
+def liste_historyfiles(apikey, galaxyurl, namehisto):
     """
     lists the files in a history
     """
-    gi = connectgalaxy(key, url)
+    gi = connectgalaxy(apikey, galaxyurl)
     filesdico = {}
-    histolist = gi.histories.get_histories(name="namehisto")
+    histolist = gi.histories.get_histories(name=namehisto)
     if len(histolist) == 0:
         raise ValueError("Il n'y a pas d'historique qui porte ce nom")
     elif len(histolist) > 1:
@@ -40,14 +43,16 @@ def liste_historyfiles(key, galaxyurl, namehisto):
         filesdico[gi.datasets.show_dataset(iddata)['id']] = gi.datasets.show_dataset(iddata)['name']
     return filesdico, idhisto
 
+
 def run_workflow(key, url, name):
-    
+
     gi = connectgalaxy(key, url)
     workflow = gi.workflows.get_workflows(name=name)
     if len(workflow) > 1:
         raise ValueError("Il y a plusieurs workflows qui portent ce nom")
     elif len(workflow) == 0:
-        raise ValueError("Pas de Workflow avec ce nom") 
+        raise ValueError("Pas de Workflow avec ce nom")
+
 
 def specific_download_dataset(gi, dataset, id, idhisto, key, file_path, use_default_filename=True, verify=True):
     download_url = 'api/histories/' + idhisto+ '/contents/' + id + '/display?to_ext=' + dataset['file_ext'] +'&hda_ldda=' + dataset['hda_ldda'] + '&key=' + key
@@ -73,6 +78,7 @@ def specific_download_dataset(gi, dataset, id, idhisto, key, file_path, use_defa
         with open(file_local_path, 'wb') as fp:
             fp.write(r.content)
 
+
 def downloadfile(key, url, id, idhisto, path):
     gi = connectgalaxy(key, url)
     dataset = gi.datasets.show_dataset(id)
@@ -84,10 +90,10 @@ def downloadfile(key, url, id, idhisto, path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-k", "--key", action="store", help="api key of galaxy")
-    parser.add_argument("-u", "--url", action="store", help="url of galaxy")
-    parser.add_argument("-m", "--my_histories", help="list yours histories")
-    parser.add_argument("-hi", "--history_list", help="list files of a history")
+    parser.add_argument("-k", "--api_key", action="store", help="api key of galaxy")
+    parser.add_argument("-u", "--galaxy_url", action="store", help="url of galaxy")
+    parser.add_argument("-m", "--my_histories", help="list yours histories", action = 'store_true')
+    parser.add_argument("-hi", "--history_list", help="list files of a history", action = 'store_true')
     parser.add_argument("-n", "--name", action="store", help="name of galaxy history")
     parser.add_argument("-w", "--name_workflow", action="store", help="id of your workflow")
     parser.add_argument("-d", "--download_files", help="download files")
@@ -98,14 +104,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.my_histories:
-        liste_histories(url, key)
+        gi = connectgalaxy(args.api_key, args.galaxy_url)
+        pprint.pprint(gi.histories.get_histories())
+        #liste_historyfiles(args.galaxy_url, args.api_key)
     elif args.history_list:
         if args.name:
-            files, idhisto = liste_historyfiles(args.key, args.url, args.name)
+            files, idhisto = liste_historyfiles(args.api_key, args.galaxy_url, args.name)
             for file in files:
-                print files[file], file
+                print "FILENAME: {0:80} FILE_ID: {1}".format(files[file], file)
         else:
-            print "the -h option need a history name"
+            print "the -hi option need a history name"
     elif args.name_workflow:
         run_workflow(args.key, args.url, args.name_workflow)
     elif args.download_files:
