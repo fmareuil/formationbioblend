@@ -111,7 +111,7 @@ if __name__ == "__main__":
         if args.name:
             files, idhisto = liste_historyfiles(args.api_key, args.galaxy_url, args.name)
             for file in files:
-                print "FILENAME: {0:80} FILE_ID: {1}".format(files[file], file)
+                print "FILENAME: {0:80} FILE_ID: {1} HISTORY_ID: {2}".format(files[file], file, idhisto)
         else:
             print "the -hi option need a history name"
     elif args.name_workflow:
