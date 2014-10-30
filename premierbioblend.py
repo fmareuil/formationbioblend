@@ -4,7 +4,7 @@ Cours G4B 2014:
     @contact: fabien.mareuil@pasteur.fr
     @contact: olivia.doppelt@pasteur.fr
     @contact: alban.lermine@pasteur.fr
-Script to use Bioblend and interract with
+Script to use Bioblend and interact with
 a galaxy instance.
 """
 from bioblend.galaxy import GalaxyInstance
@@ -50,19 +50,21 @@ def liste_historyfiles(apikey, galaxyurl, namehisto):
         print "FILENAME: {0:80} FILE_ID: {1} HISTORY_ID: {2}".format(filesdico[data], data, idhisto)
 
 
+def run_tool(api_key, galaxy_url, tool_name, name_hist):
+    print "not yes implemented or functional"
+    return 0
+
+
+
 def run_workflow(api_key, galaxy_url, name_wf, name_hist):#, dataset_id):
     dataset_map = {}
     gi = connectgalaxy(api_key, galaxy_url)
     workflow = _find_workflow(gi, name_wf)
     history = _find_history(gi, name_hist)
     dataset_id = gi.histories.show_matching_datasets(history[u'id'])[0]['id']
-    print workflow[u'inputs'].keys()[0]
-    print dataset_id
-    dataset_map[workflow[u'inputs'].keys()[0]] = {'id': dataset_id, 'src': 'ld'}
-    print dataset_map
+    dataset_map[workflow[u'inputs'].keys()[0]] = {'id': dataset_id, 'src': 'hda'}
+    return gi.workflows.run_workflow(workflow['id'], history_id=history['id'], dataset_map=dataset_map)
 
-    gi.workflows.run_workflow(workflow['id'], history_id=history['id'], dataset_map=dataset_map)
-    return 0
 
 #run_workflow(args.api_key, args.galaxy_url, args.name_workflow, args.hist_name, args.filesid)
 
@@ -74,7 +76,6 @@ def _find_workflow(gi, name):
     elif len(workflows) == 0:
         raise ValueError("Pas de Workflow avec ce nom")
     wf_id = workflows[0][u'id']
-
     return gi.workflows.show_workflow(wf_id)
 
 
@@ -121,15 +122,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-k", "--api_key", action="store", help="api key of galaxy", required=True)
     parser.add_argument("-u", "--galaxy_url", action="store", help="url of galaxy", required=True)
-    parser.add_argument('action', choices=['my_histories','list_history','run_workflow','download_files'], 
-                                   help=textwrap.dedent('''\
-                                   my_histories: list yours histories, 
-                                   history_list: list files of a history, need -n option, 
-                                   run_workflow: run a workflow, need -w, -n options, 
-                                   download_files: download files, need -n, -f, -p options
+    parser.add_argument('action', choices=['my_histories','list_history','run_workflow','download_files'],
+                         help=textwrap.dedent('''\
+                         my_histories: lists yours histories,
+                         history_list: lists files of a history, need -n option,
+                         run_workflow: runs a workflow, need -w, -n options,
+                         run_tool: runs a tool, need -t, -n options,
+                         download_files: downloads files, need -n, -f, -p options
                                    '''))
     parser.add_argument("-w", "--name_workflow", action="store", help="name of your workflow")
     parser.add_argument("-n", "--hist_name", action="store", help="name of galaxy history")
+    parser.add_argument("-t", "--tool_name", action="store", help="name of galaxy tool")
     parser.add_argument("-f", "--filesid", nargs="+", help="file id to download")
     parser.add_argument("-p", "--path", action="store", help="output path to download")
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
@@ -144,6 +147,11 @@ if __name__ == "__main__":
             liste_historyfiles(args.api_key, args.galaxy_url, args.hist_name)
         else:
             print >> sys.stderr, "the -hi option need a history name, -n option"
+    elif args.action == 'run_tool':
+        if args.tool_name and args.hist_name:
+            run_tool(args.api_key, args.galaxy_url, args.tool, args.hist_name)
+        else:
+            print >> sys.stderr, "the -t option need a tool name and a history name, -w and -n options"
     elif args.action == 'run_workflow':
         if  args.name_workflow and args.hist_name:
             run_workflow(args.api_key, args.galaxy_url, args.name_workflow, args.hist_name)#, args.filesid)
@@ -154,4 +162,4 @@ if __name__ == "__main__":
             downloadfile(args.api_key, args.galaxy_url, args.filesid, args.hist_name, args.path)
         else:
             print >> sys.stderr, "the -d option need a history name, a liste of dataset_id separate by space and a path, -n, -f and -p options"
-    
+
