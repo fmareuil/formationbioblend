@@ -27,6 +27,7 @@ def connectgalaxy(apikey, galaxyurl):
     """
     return GalaxyInstance(url=galaxyurl, key=apikey)
 
+
 def _find_history(gi, namehisto):
     """
     find a history with this name
@@ -37,6 +38,11 @@ def _find_history(gi, namehisto):
     elif len(histolist) > 1:
         raise ValueError("Il y a plus d'un historique qui porte ce nom")
     return histolist[0]
+
+def _get_history_id(gi, name_hist):
+    history = _find_history(gi, name_hist)
+    return history[u'id']
+
 
 def liste_historyfiles(apikey, galaxyurl, namehisto):
     """
@@ -53,12 +59,26 @@ def liste_historyfiles(apikey, galaxyurl, namehisto):
         print "FILENAME: {0:80} FILE_ID: {1} HISTORY_ID: {2}".format(filesdico[data], data, idhisto)
 
 
-def run_tool(api_key, galaxy_url, tool_name, name_hist):
-    print "not yes implemented or functional"
-    return 0
+def run_tool(api_key, galaxy_url, tool_name, name_hist, dataset_id):
+    print "not yet implemented or functional"
+    gi = connectgalaxy(api_key, galaxy_url)
+    my_inputs = inputs().set("input", dataset(dataset_id))
+    hist_id = _get_history_id(gi, name_hist)
+    return gi.run_tool(history_id=hist_id, tool_id="samtools_sort", tool_inputs=my_inputs)
 
 
-def run_workflow(api_key, galaxy_url, name_wf, name_hist):#, dataset_id):
+"""
+data = gi.datasets.show_dataset(dataset_id=file_id)
+    hist_id = data['history_id']
+
+   from bioblend.galaxy.tools.inputs import inputs, dataset
+   myinputs = inputs().set("prefix", 'whatyouwant_houston').set("input",dataset(dataset_id))
+   tool_outputs = gi.tools.run_tool(history_id=hist_id,tool_id="export_sbw", tool_inputs=myinputs)
+
+"""
+
+
+def run_workflow(api_key, galaxy_url, name_wf, name_hist):
     """
     run a workflow with this name and a history
     """
@@ -118,9 +138,9 @@ def downloadfile(key, url, datas_ids, namehisto, path):
     gi = connectgalaxy(key, url)
     history = _find_history(gi, namehisto)
     for data_id in datas_ids:
-        dataset = gi.datasets.show_dataset(data_id)
-        if not dataset['state'] == 'ok':
-            print >> sys.stderr, "WARNING : Dataset not ready. Dataset id: %s, current state: %s" % (data_id, dataset['state'])
+        data = gi.datasets.show_dataset(data_id)
+        if not data['state'] == 'ok':
+            print >> sys.stderr, "WARNING : Dataset not ready. Dataset id: %s, current state: %s" % (data_id, data['state'])
         else:
             gi.histories.download_dataset(history['id'], data_id, file_path=path)
     #specific_download_dataset(gi, dataset, id, idhisto, key, file_path=path, verify=True)
@@ -145,35 +165,35 @@ def create_history(key, url, history_name):
     else:
         return gi.histories.create_history(history_name)
 
-    
-def import_datas(key, url, history_name, datas):
+
+def import_data(key, url, history_name, data):
     """
-    import a list of datas in a history
+    import a list of data in a history
     """
     gi = connectgalaxy(key, url)
     history = _find_history(gi, history_name)
     libname = "lib_of_%s" % history_name
     library = _create_library(gi, libname)
     try:
-        for data in datas:
-            if os.path.isfile(data):
-                dataset = gi.libraries.upload_file_from_local_path(library['id'], data)
-                gi.histories.upload_dataset_from_library(history['id'], dataset[0]['id'])         
+        for da in data:
+            if os.path.isfile(da):
+                da = gi.libraries.upload_file_from_local_path(library['id'], da)
+                gi.histories.upload_dataset_from_library(history['id'], da[0]['id'])
             else:
                 print >> sys.stderr, "WARNING : %s doesn't exist" % data
     finally:
-        gi.libraries.delete_library(library['id'])  
-    
+        gi.libraries.delete_library(library['id'])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-k", "--api_key", action="store", help="api key of galaxy", required=True)
     parser.add_argument("-u", "--galaxy_url", action="store", help="url of galaxy", required=True)
-    parser.add_argument('action', choices=['my_histories','create_history','import_datas','list_history','run_workflow','run_tool','download_files'],
+    parser.add_argument('action', choices=['my_histories','create_history','import_data','list_history','run_workflow','run_tool','download_files'],
                          help=textwrap.dedent('''\
                          my_histories: lists yours histories,
                          create_history: create a new history, need -n option,
-                         import_datas: import a list of datas in a history, need -n and -d option,
+                         import_data: import a list of data in a history, need -n and -d option,
                          list_history: lists files of a history, need -n option,
                          run_workflow: runs a workflow, need -w, -n options,
                          run_tool: runs a tool, need -t, -n options,
@@ -199,7 +219,9 @@ if __name__ == "__main__":
             print >> sys.stderr, "the list_history option need a history name, -n option"
     elif args.action == 'run_tool':
         if args.tool_name and args.hist_name:
-            run_tool(args.api_key, args.galaxy_url, args.tool, args.hist_name)
+            #run_tool(args.api_key, args.galaxy_url, args.tool_name, args.hist_name)
+            print "not totally implemented"
+
         else:
             print >> sys.stderr, "the run_tool option need a tool name and a history name, -w and -n options"
     elif args.action == 'run_workflow':
@@ -217,9 +239,9 @@ if __name__ == "__main__":
             create_history(args.api_key, args.galaxy_url, args.hist_name)
         else:
             print >> sys.stderr, "the create_history option need a history name, -n option"
-    elif args.action == "import_datas":
+    elif args.action == "import_data":
         if args.hist_name and args.dataspaths:
-            import_datas(args.api_key, args.galaxy_url, args.hist_name, args.dataspaths)
+            import_data(args.api_key, args.galaxy_url, args.hist_name, args.dataspaths)
         else:
-            print >> sys.stderr, "the download_files option need a history name, a liste of datas paths, -n and -d options"
+            print >> sys.stderr, "the download_files option need a history name, a liste of data paths, -n and -d options"
 
