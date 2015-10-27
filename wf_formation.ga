@@ -2,7 +2,7 @@
     "a_galaxy_workflow": "true", 
     "annotation": "", 
     "format-version": "0.1", 
-    "name": "wf_formation (imported from uploaded file) (imported from uploaded file)", 
+    "name": "wf_formation", 
     "steps": {
         "0": {
             "annotation": "", 
@@ -18,8 +18,8 @@
             "name": "Input dataset", 
             "outputs": [], 
             "position": {
-                "left": 215, 
-                "top": 309
+                "left": 178, 
+                "top": 252
             }, 
             "tool_errors": null, 
             "tool_id": null, 
@@ -27,7 +27,7 @@
             "tool_version": null, 
             "type": "data_input", 
             "user_outputs": [], 
-            "uuid": "b80fae2c-ed1b-4d58-b302-23e1f40193b0"
+            "uuid": "d177272d-3513-48d3-8e00-d8f957d61366"
         }, 
         "1": {
             "annotation": "", 
@@ -48,8 +48,8 @@
                 }
             ], 
             "position": {
-                "left": 353, 
-                "top": 173.5
+                "left": 416, 
+                "top": 252
             }, 
             "post_job_actions": {}, 
             "tool_errors": null, 
@@ -58,7 +58,7 @@
             "tool_version": "1.0.2", 
             "type": "tool", 
             "user_outputs": [], 
-            "uuid": "fe662117-112c-4f46-b147-8373ffe69b85"
+            "uuid": "f4272659-7b6b-4fcf-afbc-63f457cb0f1a"
         }, 
         "2": {
             "annotation": "", 
@@ -79,8 +79,8 @@
                 }
             ], 
             "position": {
-                "left": 516, 
-                "top": 293.5
+                "left": 708, 
+                "top": 280
             }, 
             "post_job_actions": {}, 
             "tool_errors": null, 
@@ -89,8 +89,8 @@
             "tool_version": "2.0", 
             "type": "tool", 
             "user_outputs": [], 
-            "uuid": "c37a2b2c-7119-4d5d-aff3-69cd08c9e48a"
+            "uuid": "fd98a12d-b3e3-4b71-bba4-8c1d910e586d"
         }
     }, 
-    "uuid": "c7e3f1c5-a0e9-4d0a-bc68-ba414bafa818"
+    "uuid": "3e16f8ee-1c26-4510-a59b-4fd2a8a22be9"
 }
